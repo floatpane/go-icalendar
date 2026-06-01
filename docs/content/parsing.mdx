@@ -1,0 +1,82 @@
+---
+title: Parsing Invites
+---
+
+# Parsing Invites
+
+Two entry points read `.ics` bytes:
+
+- **`ParseICS(data) (*Event, error)`** — returns the *first* VEVENT. This is
+  what mail clients want: invites are overwhelmingly single-event.
+- **`Parse(data) (*Calendar, error)`** — returns every VEVENT plus the
+  calendar-level method and headers. Use it when a calendar may carry several
+  events. An empty calendar is not an error.
+
+```go
+cal, err := icalendar.Parse(data)
+if err != nil {
+    log.Fatal(err)
+}
+fmt.Println(cal.Method) // REQUEST, REPLY, CANCEL, PUBLISH, ...
+for _, ev := range cal.Events {
+    fmt.Println(ev.UID, ev.Summary)
+}
+```
+
+## The Event struct
+
+Everything is flattened onto one struct, so rendering needs no property lookups:
+
+```go
+type Event struct {
+    UID         string
+    Summary     string
+    Description string
+    Location    string
+    Start, End  time.Time
+    AllDay      bool
+
+    Organizer     string
+    OrganizerName string
+    Attendees     []Attendee
+
+    Status     string // CONFIRMED, TENTATIVE, CANCELLED
+    Method     string // mirrors the calendar METHOD
+    Sequence   int
+    URL        string
+    Categories []string
+
+    Stamp, Created, Modified time.Time
+
+    Recurrence       *RRule
+    RDates, ExDates  []time.Time
+}
+```
+
+`Status` and `Method` are plain strings because they come straight off the
+wire; compare them against the typed constants with a conversion, e.g.
+`ev.Status == string(icalendar.StatusConfirmed)`.
+
+## Timestamps
+
+`DTSTART` / `DTEND` are parsed with full RFC 5545 awareness:
+
+| Form | Example | Result |
+|------|---------|--------|
+| UTC | `20260421T140000Z` | `time.Time` in UTC |
+| Floating / TZID | `DTSTART;TZID=America/New_York:20260421T140000` | placed in that zone |
+| All-day | `DTSTART;VALUE=DATE:20260421` | midnight, `AllDay = true` |
+
+> [!NOTE]
+> RFC 5545 forbids a `TZID` on a `VALUE=DATE` value, but some producers emit it
+> anyway. `go-icalendar` ignores the bogus zone and treats such values as the
+> date they name — no silent day-shift.
+
+When `DTEND` is absent, the end is derived from a `DURATION` property (e.g.
+`PT1H30M`), or for an all-day event defaults to one day.
+
+```go
+ev, _ := icalendar.ParseICS(data)
+fmt.Println(ev.Duration())   // End - Start
+fmt.Println(ev.IsRecurring())
+```

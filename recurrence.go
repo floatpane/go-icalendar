@@ -349,7 +349,7 @@ func (r *RRule) candidates(dtstart, periodStart time.Time) []time.Time {
 
 	switch r.Freq {
 	case Monthly:
-		set = r.monthlyDays(periodStart)
+		set = r.monthlyDays(dtstart, periodStart)
 	case Yearly:
 		set = r.yearlyDays(dtstart, periodStart)
 	case Weekly:
@@ -386,15 +386,14 @@ func (r *RRule) weeklyDays(dtstart, periodStart time.Time) []time.Time {
 
 // monthlyDays expands a MONTHLY period via BYMONTHDAY and/or BYDAY; with neither
 // it keeps dtstart's day-of-month.
-func (r *RRule) monthlyDays(periodStart time.Time) []time.Time {
+func (r *RRule) monthlyDays(dtstart, periodStart time.Time) []time.Time {
 	year, month := periodStart.Year(), periodStart.Month()
 	var out []time.Time
 
+	// periodStart is anchored to the 1st of the month, so the original
+	// day-of-month and time-of-day come from dtstart.
 	if len(r.ByMonthDay) == 0 && len(r.ByDay) == 0 {
-		// periodStart is the 1st; restore the original day-of-month from clock.
-		// We carried day via... actually use the day stored separately: use the
-		// dtstart day captured in periodStart's nanoseconds? No — recompute.
-		return monthDayIfValid(year, month, periodStart.Day(), periodStart)
+		return monthDayIfValid(year, month, dtstart.Day(), dtstart)
 	}
 
 	for _, md := range r.ByMonthDay {
@@ -402,10 +401,10 @@ func (r *RRule) monthlyDays(periodStart time.Time) []time.Time {
 		if md < 0 {
 			day = daysInMonth(year, month) + md + 1
 		}
-		out = append(out, monthDayIfValid(year, month, day, periodStart)...)
+		out = append(out, monthDayIfValid(year, month, day, dtstart)...)
 	}
 	for _, wd := range r.ByDay {
-		out = append(out, weekdayOccurrences(year, month, wd, periodStart)...)
+		out = append(out, weekdayOccurrences(year, month, wd, dtstart)...)
 	}
 	return out
 }
@@ -555,4 +554,48 @@ func withClock(date, clock time.Time) time.Time {
 
 func daysInMonth(year int, month time.Month) int {
 	return time.Date(year, month+1, 0, 0, 0, 0, 0, time.UTC).Day()
+}
+
+// Occurrences returns the concrete start times of this event within the
+// half-open window [from, to), merging the RRULE expansion with any RDATE and
+// removing any EXDATE. A non-recurring event yields its single start if it falls
+// in the window. Results are sorted and de-duplicated; pass limit > 0 to cap the
+// count (0 means unlimited, subject to an internal safety bound).
+func (e *Event) Occurrences(from, to time.Time, limit int) []time.Time {
+	if e.Start.IsZero() || !to.After(from) {
+		return nil
+	}
+
+	var times []time.Time
+	if e.Recurrence != nil {
+		times = append(times, e.Recurrence.Between(e.Start, from, to, 0)...)
+	} else if !e.Start.Before(from) && e.Start.Before(to) {
+		times = append(times, e.Start)
+	}
+	for _, rd := range e.RDates {
+		if !rd.Before(from) && rd.Before(to) {
+			times = append(times, rd)
+		}
+	}
+
+	excluded := make(map[int64]bool, len(e.ExDates))
+	for _, ex := range e.ExDates {
+		excluded[ex.Unix()] = true
+	}
+
+	sort.Slice(times, func(i, j int) bool { return times[i].Before(times[j]) })
+	out := times[:0]
+	var prev int64 = -1
+	for _, t := range times {
+		u := t.Unix()
+		if excluded[u] || u == prev {
+			continue
+		}
+		prev = u
+		out = append(out, t)
+		if limit > 0 && len(out) >= limit {
+			break
+		}
+	}
+	return out
 }

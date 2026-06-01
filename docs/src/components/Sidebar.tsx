@@ -7,10 +7,11 @@ import { useState } from "react";
 const SECTIONS = [
 	{ title: "Introduction", slug: "introduction" },
 	{ title: "Getting Started", slug: "getting-started" },
-	{ title: "One-Shot: Seal & Unseal", slug: "seal" },
-	{ title: "The Vault", slug: "vault" },
-	{ title: "Key Rotation", slug: "rotation" },
-	{ title: "Threat Model", slug: "security" },
+	{ title: "Parsing Invites", slug: "parsing" },
+	{ title: "Building Invites", slug: "building" },
+	{ title: "RSVP Replies", slug: "rsvp" },
+	{ title: "Recurrence (RRULE)", slug: "recurrence" },
+	{ title: "Free / Busy", slug: "freebusy" },
 ];
 
 export function Sidebar() {

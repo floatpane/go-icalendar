@@ -1,0 +1,68 @@
+---
+title: Recurrence (RRULE)
+---
+
+# Recurrence
+
+A recurring event carries an `RRULE`. `go-icalendar` parses it into a typed
+`RRule` and expands it into concrete occurrences.
+
+```go
+ev, _ := icalendar.ParseICS(data)
+if ev.IsRecurring() {
+    from := time.Now()
+    to := from.AddDate(0, 1, 0) // next month
+    for _, t := range ev.Occurrences(from, to, 0) {
+        fmt.Println(t.Local())
+    }
+}
+```
+
+`Occurrences(from, to, limit)` returns occurrence start times in the half-open
+window `[from, to)`, merging the RRULE expansion with any `RDATE` and removing
+any `EXDATE`. Pass `limit > 0` to cap the count; `0` means unlimited (subject to
+an internal safety bound).
+
+## Parsing and emitting rules directly
+
+```go
+r, err := icalendar.ParseRRule("FREQ=WEEKLY;INTERVAL=2;BYDAY=MO,WE;COUNT=10")
+fmt.Println(r.Freq)      // WEEKLY
+fmt.Println(r.String())  // canonical RRULE text
+
+times := r.Between(dtstart, from, to, 0)
+```
+
+`Between` enumerates a rule's occurrences anchored at `dtstart`; `dtstart` is
+always the first occurrence.
+
+## Supported rule parts
+
+| Part | Supported | Notes |
+|------|-----------|-------|
+| `FREQ` | ✅ | SECONDLY → YEARLY |
+| `INTERVAL` | ✅ | |
+| `COUNT` / `UNTIL` | ✅ | |
+| `BYMONTH` | ✅ | |
+| `BYMONTHDAY` | ✅ | negatives count from month end (`-1` = last day) |
+| `BYDAY` | ✅ | ordinals too: `2MO` (2nd Monday), `-1FR` (last Friday) |
+| `BYSETPOS` | ✅ | e.g. last weekday of the month |
+| `WKST` | ✅ | defaults to Monday |
+| `BYWEEKNO`, `BYYEARDAY` | ⚠️ | parsed but ignored during expansion |
+
+## Examples
+
+```go
+// "Last Friday of every month"
+icalendar.ParseRRule("FREQ=MONTHLY;BYDAY=-1FR")
+
+// "Every other week on Mon/Wed/Fri, 10 times"
+icalendar.ParseRRule("FREQ=WEEKLY;INTERVAL=2;BYDAY=MO,WE,FR;COUNT=10")
+
+// "The last weekday of each month"
+icalendar.ParseRRule("FREQ=MONTHLY;BYDAY=MO,TU,WE,TH,FR;BYSETPOS=-1")
+```
+
+> [!NOTE]
+> Months that lack the requested day are skipped, per RFC 5545 — e.g.
+> `FREQ=MONTHLY;BYMONTHDAY=31` produces no occurrence in February or April.

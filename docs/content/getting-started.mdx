@@ -1,0 +1,83 @@
+---
+title: Getting Started
+---
+
+# Getting Started
+
+## Install
+
+```bash
+go get github.com/floatpane/go-icalendar
+```
+
+Requires Go 1.26+.
+
+## Parse an invite and render it
+
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+    "os"
+
+    icalendar "github.com/floatpane/go-icalendar"
+)
+
+func main() {
+    data, err := os.ReadFile("invite.ics")
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    ev, err := icalendar.ParseICS(data)
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    fmt.Printf("%s\n", ev.Summary)
+    fmt.Printf("%s – %s\n", ev.Start.Local().Format("Mon Jan 2 3:04 PM"),
+        ev.End.Local().Format("3:04 PM"))
+    fmt.Printf("Organizer: %s\n", ev.Organizer)
+    for _, a := range ev.Attendees {
+        fmt.Printf("  %s (%s)\n", a.Email, a.PartStat)
+    }
+}
+```
+
+## Reply to it
+
+```go
+reply, err := icalendar.GenerateRSVP(data, "me@example.com", "ACCEPTED")
+if err != nil {
+    log.Fatal(err)
+}
+// Attach reply as text/calendar; method=REPLY and send it back to the organizer.
+```
+
+## Send your own invite
+
+```go
+start := time.Date(2026, 5, 1, 9, 0, 0, 0, time.UTC)
+ev := &icalendar.Event{
+    UID:       "kickoff-2026-05@example.com",
+    Summary:   "Project kickoff",
+    Location:  "Room 1",
+    Start:     start,
+    End:       start.Add(time.Hour),
+    Organizer: "me@example.com",
+    Attendees: []icalendar.Attendee{
+        {Email: "you@example.com", PartStat: icalendar.PartStatNeedsAction, RSVP: true},
+    },
+}
+ics, err := icalendar.NewRequest(ev).Serialize()
+```
+
+## Where next
+
+- [Parsing Invites](/parsing) — the `Event` struct and timestamp handling.
+- [Building Invites](/building) — REQUEST / CANCEL calendars and serialization.
+- [RSVP Replies](/rsvp) — the iMIP reply dance, in detail.
+- [Recurrence (RRULE)](/recurrence) — expanding recurring events.
+- [Free / Busy](/freebusy) — computing availability.

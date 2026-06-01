@@ -1,0 +1,74 @@
+---
+title: Building Invites
+---
+
+# Building Invites
+
+A `Calendar` is both what you get from `Parse` and what you construct to send.
+`Serialize()` renders it to RFC 5545 bytes (CRLF-folded), filling in a default
+`PRODID`, `VERSION:2.0`, and a `DTSTAMP` for any event missing one.
+
+```go
+ics, err := cal.Serialize()
+```
+
+## REQUEST — invite people to a meeting
+
+`NewRequest` wraps an event in a `METHOD:REQUEST` calendar and defaults its
+status to `CONFIRMED`.
+
+```go
+start := time.Date(2026, 5, 1, 9, 0, 0, 0, time.UTC)
+ev := &icalendar.Event{
+    UID:       "kickoff@example.com",
+    Summary:   "Project kickoff",
+    Location:  "Room 1",
+    Start:     start,
+    End:       start.Add(time.Hour),
+    Organizer: "me@example.com",
+    Attendees: []icalendar.Attendee{
+        {Email: "you@example.com", Name: "You",
+         PartStat: icalendar.PartStatNeedsAction, RSVP: true},
+    },
+}
+ics, _ := icalendar.NewRequest(ev).Serialize()
+```
+
+## CANCEL — call it off
+
+`NewCancel` marks the event `CANCELLED` and bumps its `SEQUENCE`, so recipients
+treat the cancellation as newer than the original invite (RFC 5546 §3.2.5).
+Carry the **same UID** as the original.
+
+```go
+ics, _ := icalendar.NewCancel(ev).Serialize()
+```
+
+## All-day events
+
+Set `AllDay` and use date-aligned `Start`/`End`; the serializer emits
+`VALUE=DATE` values.
+
+```go
+ev := &icalendar.Event{
+    UID:     "holiday@example.com",
+    Summary: "Company holiday",
+    AllDay:  true,
+    Start:   time.Date(2026, 7, 4, 0, 0, 0, 0, time.UTC),
+    End:     time.Date(2026, 7, 5, 0, 0, 0, 0, time.UTC),
+}
+ics, _ := icalendar.NewCalendar().Add(ev).Serialize()
+```
+
+## Multiple events
+
+`NewCalendar()` starts an empty `PUBLISH` calendar; chain `Add`:
+
+```go
+ics, _ := icalendar.NewCalendar().Add(ev1, ev2, ev3).Serialize()
+```
+
+> [!WARNING]
+> Every event needs a `UID`. `Serialize` returns an error for an event without
+> one — a UID is what lets later updates, replies and cancellations refer back
+> to the same meeting.
