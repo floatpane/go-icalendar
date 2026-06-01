@@ -108,30 +108,17 @@ func ParseRRule(s string) (*RRule, error) {
 				}
 				r.ByMonth = append(r.ByMonth, time.Month(n))
 			}
-		case "BYMONTHDAY":
+		case "BYMONTHDAY", "BYHOUR", "BYMINUTE", "BYSETPOS":
 			ints, err := parseIntList(val)
 			if err != nil {
-				return nil, fmt.Errorf("rrule: bad BYMONTHDAY: %w", err)
+				return nil, fmt.Errorf("rrule: bad %s: %w", key, err)
 			}
-			r.ByMonthDay = ints
-		case "BYHOUR":
-			ints, err := parseIntList(val)
-			if err != nil {
-				return nil, fmt.Errorf("rrule: bad BYHOUR: %w", err)
-			}
-			r.ByHour = ints
-		case "BYMINUTE":
-			ints, err := parseIntList(val)
-			if err != nil {
-				return nil, fmt.Errorf("rrule: bad BYMINUTE: %w", err)
-			}
-			r.ByMinute = ints
-		case "BYSETPOS":
-			ints, err := parseIntList(val)
-			if err != nil {
-				return nil, fmt.Errorf("rrule: bad BYSETPOS: %w", err)
-			}
-			r.BySetPos = ints
+			*map[string]*[]int{
+				"BYMONTHDAY": &r.ByMonthDay,
+				"BYHOUR":     &r.ByHour,
+				"BYMINUTE":   &r.ByMinute,
+				"BYSETPOS":   &r.BySetPos,
+			}[key] = ints
 		case "BYDAY":
 			for _, p := range splitCommaList(val) {
 				wd, err := parseWeekDay(p)
@@ -320,7 +307,7 @@ func (r *RRule) periodStart(dtstart time.Time, interval, p int) (time.Time, bool
 		y := dtstart.Year()
 		m := int(dtstart.Month()) - 1 + interval*p
 		y += m / 12
-		m = m % 12
+		m %= 12
 		if m < 0 {
 			m += 12
 			y--
@@ -354,11 +341,12 @@ func (r *RRule) candidates(dtstart, periodStart time.Time) []time.Time {
 		set = r.yearlyDays(dtstart, periodStart)
 	case Weekly:
 		set = r.weeklyDays(dtstart, periodStart)
-	default:
-		// DAILY and sub-day: the period anchor itself, gated by BY* filters.
+	case Daily, Hourly, Minutely, Secondly:
+		// The period anchor itself, gated by BY* filters.
 		if r.dayMatches(periodStart) {
 			set = []time.Time{periodStart}
 		}
+	default:
 	}
 
 	set = r.applyByMonth(set)
