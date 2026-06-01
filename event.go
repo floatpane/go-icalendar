@@ -64,10 +64,10 @@ type Event struct {
 	OrganizerName string // organizer CN, if any
 	Attendees     []Attendee
 
-	Status   string // CONFIRMED, TENTATIVE, CANCELLED
-	Method   string // REQUEST, REPLY, CANCEL (mirrors the calendar METHOD)
-	Sequence int    // SEQUENCE; bump on every update to an existing UID
-	URL      string
+	Status     string // CONFIRMED, TENTATIVE, CANCELLED
+	Method     string // REQUEST, REPLY, CANCEL (mirrors the calendar METHOD)
+	Sequence   int    // SEQUENCE; bump on every update to an existing UID
+	URL        string
 	Categories []string
 
 	Stamp    time.Time // DTSTAMP
