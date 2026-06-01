@@ -82,21 +82,21 @@
   description: macOS-specific
 
 # --- Area ---
-- name: area/seal
+- name: area/parse
   color: c2e0c6
-  description: One-shot Seal/Unseal blob format
-- name: area/vault
+  description: Parsing .ics into Event/Calendar, timestamps, timezones
+- name: area/build
   color: c2e0c6
-  description: Vault, secure mode, session key, sentinel
-- name: area/rotation
+  description: Building/serializing calendars (REQUEST/CANCEL)
+- name: area/rsvp
   color: c2e0c6
-  description: Rekey / ChangePassword / key rotation
-- name: area/kdf
+  description: iMIP replies (GenerateRSVP, Reply, PARTSTAT)
+- name: area/recurrence
   color: c2e0c6
-  description: Key derivation (Argon2id, salts)
-- name: area/cipher
+  description: RRULE parsing and occurrence expansion
+- name: area/freebusy
   color: c2e0c6
-  description: Ciphers (AES-GCM, ChaCha20-Poly1305, AEAD framing)
+  description: Free/busy and availability computation
 - name: area/docs
   color: c2e0c6
   description: Docs site / README

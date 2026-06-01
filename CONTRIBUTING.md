@@ -56,9 +56,9 @@ Common types: `feat`, `fix`, `docs`, `test`, `ci`, `chore`.
 Examples:
 
 ```
-feat(cipher): add XChaCha20-Poly1305 implementation
-fix(vault): zero old key before swapping during Rekey
-docs: document the self-describing Seal blob layout
+feat(recurrence): support BYSETPOS in monthly expansion
+fix(parse): ignore TZID on VALUE=DATE values
+docs: document the iMIP reply requirements
 ```
 
 ### Before Submitting a PR
@@ -73,7 +73,7 @@ docs: document the self-describing Seal blob layout
 
 Open an issue using the bug report template. Include:
 
-- A minimal reproducer (a `Seal`/`Unseal` or `Vault` snippet, the bytes that trigger the bug, or a failing test)
+- A minimal reproducer (a `ParseICS`/`Serialize` snippet, the `.ics` bytes or RRULE that trigger the bug, or a failing test)
 - Expected vs. actual behavior
 - Go version, OS
 

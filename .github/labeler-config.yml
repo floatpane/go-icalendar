@@ -24,15 +24,15 @@
 
 "os/macos": '\b([Mm]ac[Oo][Ss]?|[Oo][Ss] ?[Xx]|[Dd]arwin|[Mm]acbook)\b'
 
-"area/seal": '\b([Ss]eal|[Uu]nseal|one[- ]?shot|blob|envelope)\b'
+"area/parse": '\b([Pp]arse|[Pp]arsing|VEVENT|VCALENDAR|DTSTART|DTEND|TZID|[Tt]imezone|[Aa]ll[- ]?day)\b'
 
-"area/vault": '\b([Vv]ault|[Ss]ecure mode|session key|sentinel|[Uu]nlock|[Ll]ock)\b'
+"area/build": '\b([Bb]uild|[Ss]erializ(e|ation)|REQUEST|CANCEL|PRODID|[Ii]nvite)\b'
 
-"area/rotation": '\b([Rr]ekey|[Rr]otat(e|ion)|[Cc]hange ?[Pp]assword)\b'
+"area/rsvp": '\b(RSVP|REPLY|PARTSTAT|[Aa]ttendee|iMIP|[Aa]ccept|[Dd]ecline|[Tt]entative)\b'
 
-"area/kdf": '\b(KDF|[Aa]rgon2(id)?|[Dd]erive ?[Kk]ey|salt)\b'
+"area/recurrence": '\b(RRULE|[Rr]ecurr(ence|ing)|RDATE|EXDATE|FREQ|BYDAY|BYSETPOS|[Oo]ccurrence)\b'
 
-"area/cipher": '\b([Cc]ipher|AES|GCM|[Cc]ha[Cc]ha20|[Pp]oly1305|AEAD|[Nn]once)\b'
+"area/freebusy": '\b([Ff]ree[/ ]?busy|VFREEBUSY|[Aa]vailability|[Bb]usy)\b'
 
 "area/docs": '\b([Dd]ocumentation|[Dd]ocs|[Rr]eadme)\b'
 

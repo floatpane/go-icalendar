@@ -21,18 +21,14 @@ We will acknowledge your report within 48 hours and aim to provide a fix or miti
 
 This policy covers the go-icalendar codebase and its official releases.
 
-Of particular interest, since this is a cryptographic library:
+Since this library parses untrusted `.ics` data straight off email attachments, of particular interest:
 
-- **Nonce reuse** — any code path where a fixed or predictable nonce could be fed to an AEAD, breaking confidentiality/integrity.
-- **Sentinel oracle** — `Vault.Unlock` leaking timing or error detail that distinguishes "wrong password" from "corrupt metadata" beyond what is intended.
-- **Weak defaults** — `DefaultArgon2id` parameters that are too low for the stated interactive-login threat model.
-- **Key-zeroing failures** — derived keys surviving `Lock`/`Rekey`/`zero` longer than documented, or being copied where they cannot be wiped.
-- **Rekey corruption** — a partial `Rekey` (crash, disk-full, decrypt failure) leaving files unreadable under both old and new passwords.
-- **Format confusion** — a crafted `Seal` blob or metadata file that triggers panics, runaway allocations, or decrypts under an unintended algorithm.
+- **Parser denial-of-service** — crafted calendar input that triggers panics, unbounded memory growth, or pathological CPU use in `Parse` / `ParseICS`.
+- **Recurrence blowups** — an `RRULE` that causes runaway expansion in `Occurrences` / `Between` despite the iteration cap, or that bypasses it.
+- **Injection into generated output** — attendee, summary or other user-controlled fields that break out of their property in `Serialize`, producing forged headers or smuggled components.
+- **Reply confusion** — `GenerateRSVP` matching the wrong attendee, leaking other attendees into a reply, or mis-setting `PARTSTAT`/`METHOD`.
 
-Note the explicit non-goals (see the docs): go-icalendar does not protect keys in memory against a privileged local attacker, and offers no protection once the password is known.
-
-Third-party dependencies (notably `golang.org/x/crypto`) are outside our direct control, but we will work to address reported issues in them as quickly as possible.
+Third-party dependencies (notably `github.com/arran4/golang-ical`) are outside our direct control, but we will work to address reported issues in them as quickly as possible.
 
 ## Disclosure
 

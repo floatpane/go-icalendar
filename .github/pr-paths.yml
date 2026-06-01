@@ -1,24 +1,30 @@
 # Path → label rules for actions/labeler@v6 (PR file paths).
 
-"area/seal":
+"area/parse":
   - changed-files:
       - any-glob-to-any-file:
-          - icalendar.go
+          - parse.go
+          - event.go
 
-"area/vault":
+"area/build":
   - changed-files:
       - any-glob-to-any-file:
-          - vault.go
+          - build.go
 
-"area/kdf":
+"area/rsvp":
   - changed-files:
       - any-glob-to-any-file:
-          - kdf.go
+          - rsvp.go
 
-"area/cipher":
+"area/recurrence":
   - changed-files:
       - any-glob-to-any-file:
-          - cipher.go
+          - recurrence.go
+
+"area/freebusy":
+  - changed-files:
+      - any-glob-to-any-file:
+          - freebusy.go
 
 "area/docs":
   - changed-files:
